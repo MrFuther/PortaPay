@@ -1,0 +1,270 @@
+{
+  "name": "Payment Method",
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.from.value[0].address }}",
+                    "rightValue": "dana.id",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "ea749266-6eb8-4944-b5ea-0d72204a4146"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "0062bc19-110f-42fd-b367-694b73e93d11",
+                    "leftValue": "={{ $json.from.value[0].address }}",
+                    "rightValue": "seabank.co.id",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        192,
+        0
+      ],
+      "id": "037cc243-aba0-4325-a1aa-afd985102649",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- 1. Cari data transaksi WAITING_PAYMENT dengan nominal kode unik yang cocok (kurang dari 2 jam)\nWITH valid_transaction AS (\n    SELECT id, buyer_id, amount \n    FROM \"Transactions\" \n    WHERE \"amount_with_code\" = {{ $json.nominal_mutasi }} \n      AND \"status\" = 'WAITING_PAYMENT'\n      AND \"createdAt\" >= NOW() - INTERVAL '2 hours'\n    LIMIT 1\n),\n-- 2. Jika ketemu, ubah status transaksi tersebut menjadi PAID\nupdate_tx AS (\n    UPDATE \"Transactions\"\n    SET \"status\" = 'PAID'\n    WHERE id = (SELECT id FROM valid_transaction)\n    RETURNING buyer_id, amount\n)\n-- 3. Tambahkan saldo nominal asli (tanpa kode unik) ke akun Users terkait\nUPDATE \"Users\" u\nSET \"available_balance\" = u.\"available_balance\" + t.amount,\n    \"is_active\" = false\nFROM update_tx t\nWHERE u.\"discord_id\" = t.buyer_id\nRETURNING u.username, u.discord_id, t.amount;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        576,
+        80
+      ],
+      "id": "75e6a89b-d584-45cc-8fdc-a053cb26a7c3",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "zvY5EFMoPFhMOl9p",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "format": "resolved",
+        "options": {
+          "customEmailConfig": "[[\"OR\", [\"FROM\", \"noreply@dana.id\"], [\"FROM\", \"no-reply@seabank.co.id\"]]]"
+        }
+      },
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -80
+      ],
+      "id": "4e8cf081-662f-4fca-a159-a5bd86de1345",
+      "name": "Email Trigger (IMAP)",
+      "credentials": {
+        "imap": {
+          "id": "OZ9Tzni60ebbXuvo",
+          "name": "IMAP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// 1. Ambil teks isi email mentah dari node sebelumnya\nconst emailBody = $input.item.json.text || \"\";\n\n// 2. Rumus Regex khusus DANA untuk mencari pola uang (misal: Rp 50.247)\nconst regexDana = /(?:Rp|IDR)\\s*([\\d\\.]+)/i;\nconst match = emailBody.match(regexDana);\n\nlet nominalBersih = 0;\nif (match && match[1]) {\n    // Hilangkan tanda titik ribuan agar terbaca sebagai angka bulat (50247)\n    nominalBersih = parseInt(match[1].replace(/\\./g, ''));\n}\n\n// 3. Kirim data yang sudah bersih ke node berikutnya\nreturn {\n  json: {\n    nominal_mutasi: nominalBersih,\n    subjek: $input.item.json.subject,\n    waktu: $input.item.json.date\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        -80
+      ],
+      "id": "6f8edbd2-249b-4d65-8b14-bdd2a8fa0aed",
+      "name": "RegexDANA"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const emailBody = $input.item.json.text || \"\";\n\n// REGEX khusus mendeteksi nominal setelah kata kunci uang/transfer masuk di SeaBank\nconst regexSeaBank = /(?:Rp|IDR)\\s*([\\d\\.]+)/i;\nconst match = emailBody.match(regexSeaBank);\n\nlet nominalBersih = 0;\nif (match && match[1]) {\n    nominalBersih = parseInt(match[1].replace(/\\./g, ''));\n}\n\nreturn {\n  json: {\n    nominal_mutasi: nominalBersih, // Variabel harus sama persis dengan jalur DANA\n    subjek: $input.item.json.subject,\n    waktu: $input.item.json.date\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        80
+      ],
+      "id": "cdf56966-b047-43dd-b635-d494ab29f73b",
+      "name": "RegexSeabank"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- 1. Cari transaksi yang cocok dan ubah statusnya menjadi PAID secara langsung\nUPDATE Transactions \nSET status = 'PAID' \nWHERE amount_with_code = {{ $json.nominal_mutasi }} \n  AND status = 'WAITING_PAYMENT' \n  -- Batas waktu 2 jam terakhir menggunakan fungsi MySQL (NOW - 2 jam)\n  AND createdAt >= DATE_SUB(NOW(), INTERVAL 2 HOUR)\nLIMIT 1;\n\n-- 2. Tambahkan saldo nominal asli ke user (Advertiser) yang transaksinya baru saja di-update\nUPDATE Users u\nJOIN Transactions t ON u.discord_id = t.buyer_id\nSET u.available_balance = u.available_balance + t.amount,\n    u.is_active = 0 -- Di MySQL menggunakan 0 untuk false / Boolean\nWHERE t.amount_with_code = {{ $json.nominal_mutasi }}\n  AND t.status = 'PAID'\n  AND t.createdAt >= DATE_SUB(NOW(), INTERVAL 2 HOUR);\n\n-- 3. Ambil data user yang berhasil di-update untuk dikirim sebagai notifikasi Discord\nSELECT u.username, u.discord_id, t.amount \nFROM Users u\nJOIN Transactions t ON u.discord_id = t.buyer_id\nWHERE t.amount_with_code = {{ $json.nominal_mutasi }}\n  AND t.status = 'PAID'\nORDER BY t.updatedAt DESC\nLIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        576,
+        -80
+      ],
+      "id": "1ebbef3c-4df2-496c-9724-dea8940fe714",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "mySql": {
+          "id": "R9ImPrwAVX99pZdD",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "unit": "minutes"
+            }
+          ]
+        },
+        "filters": {
+          "q": "is:unread from:noreply@dana.id"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        80
+      ],
+      "id": "34e66014-36ff-4f24-bc05-57581949c673",
+      "name": "Gmail Trigger",
+      "disabled": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "RegexDANA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "RegexSeabank",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Trigger (IMAP)": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RegexDANA": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RegexSeabank": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "231b3e95-5d96-4399-a47e-6897c675070e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a81d170ad867499f18dc93718cfdb23bad5565869c22bb6a7be586d1a0afdfb6"
+  },
+  "nodeGroups": [],
+  "id": "K9ZIMlTQDCwVGVoy",
+  "tags": []
+}
