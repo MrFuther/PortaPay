@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, PermissionFlagsBits } = require('discord.js')
 const EscrowService = require('../../services/escrow')
+const WithdrawalService = require('../../services/withdrawal')
 const fmt = require('./formatter')
 const GuildSettings = require('../../db/guild-settings')
 const DashboardService = require('./dashboard')
@@ -49,6 +50,14 @@ const commands = [
     .setName('komplain')
     .setDescription('Ajukan komplain & bekukan transaksi jika ada kendala')
     .addStringOption(o => o.setName('alasan').setDescription('Alasan/detail komplain').setRequired(false)),
+
+  new SlashCommandBuilder()
+    .setName('withdraw')
+    .setDescription('Tarik saldo hasil transaksi ke rekening / e-wallet')
+    .addNumberOption(o => o.setName('nominal').setDescription('Nominal yang ditarik').setRequired(true))
+    .addStringOption(o => o.setName('metode').setDescription('Nama Bank / E-Wallet (DANA, SeaBank, BCA, GoPay, OVO)').setRequired(true))
+    .addStringOption(o => o.setName('rekening').setDescription('Nomor Rekening / Nomor HP E-Wallet').setRequired(true))
+    .addStringOption(o => o.setName('nama').setDescription('Nama pemilik rekening / e-wallet').setRequired(true)),
 
   new SlashCommandBuilder()
     .setName('setupbot')
@@ -209,6 +218,25 @@ async function handleInteraction(interaction) {
 
     if (!result.success) return ephReply(fmt.error(result.message))
     return ephReply(fmt.dispute(result.transaction, result.reason))
+  }
+
+  if (interaction.commandName === 'withdraw') {
+    const amount = interaction.options.getNumber('nominal')
+    const bank_name = interaction.options.getString('metode')
+    const account_number = interaction.options.getString('rekening')
+    const account_name = interaction.options.getString('nama')
+
+    const result = await WithdrawalService.requestWithdrawal({
+      user_platform_id: user.id,
+      platform,
+      amount,
+      bank_name,
+      account_number,
+      account_name
+    })
+
+    if (!result.success) return ephReply(fmt.error(result.message))
+    return ephReply(fmt.withdrawRequested(result.withdrawal, result.newBalance))
   }
 
   if (interaction.commandName === 'setupbot') {

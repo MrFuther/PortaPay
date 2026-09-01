@@ -8,6 +8,8 @@ const fmt = {
       `🔹 /kirim <ekspedisi> <nomor\\_resi> — Tandai barang dikirim\n` +
       `🔹 /terima — Lihat resi & konfirmasi terima barang\n` +
       `🔹 /konfirmasi — Selesaikan transaksi\n` +
+      `🔹 /komplain — Ajukan komplain / bekukan transaksi\n` +
+      `🔹 /withdraw <nominal> <metode> <rekening> <nama> — Tarik saldo\n` +
       `🔹 /status — Cek status transaksi aktif\n\n` +
       `⚠️ Setiap user hanya bisa punya 1 transaksi aktif.`
     )
@@ -127,6 +129,18 @@ const fmt = {
 
   error(message) {
     return `❌ Error: ${message}`
+  },
+
+  withdrawRequested(withdrawal, newBalance) {
+    return (
+      `💸 *Pengajuan Penarikan Dana Berhasil*\n\n` +
+      `📋 *ID Pengajuan:* \`${withdrawal.id}\`\n` +
+      `💸 *Nominal Ditarik:* Rp ${Number(withdrawal.amount).toLocaleString('id-ID')}\n` +
+      `🏦 *Tujuan:* ${withdrawal.bank_name} - \`${withdrawal.account_number}\`\n` +
+      `👤 *Atas Nama:* ${withdrawal.account_name}\n` +
+      `💰 *Saldo Tersisa:* Rp ${Number(newBalance).toLocaleString('id-ID')}\n` +
+      `🏷️ *Status:* ⏳ PENDING (Menunggu Admin)`
+    )
   }
 }
 

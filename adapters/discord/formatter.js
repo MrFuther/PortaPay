@@ -169,6 +169,25 @@ const formatter = {
     }
   },
 
+  withdrawRequested(withdrawal, newBalance) {
+    return {
+      embeds: [{
+        title: '💸 Pengajuan Penarikan Dana Berhasil',
+        color: 0x00b894,
+        description: 'Pengajuan penarikan dana kamu telah diterima dan sedang **menunggu proses dari Admin**.',
+        fields: [
+          { name: '📋 ID Pengajuan', value: `\`${withdrawal.id}\`` },
+          { name: '💸 Nominal Ditarik', value: `Rp ${Number(withdrawal.amount).toLocaleString('id-ID')}`, inline: true },
+          { name: '🏦 Tujuan', value: `${withdrawal.bank_name} - \`${withdrawal.account_number}\``, inline: true },
+          { name: '👤 Atas Nama', value: withdrawal.account_name, inline: true },
+          { name: '💰 Saldo Tersisa', value: `Rp ${Number(newBalance).toLocaleString('id-ID')}`, inline: true },
+          { name: '🏷️ Status', value: '⏳ `PENDING` (Menunggu Admin)', inline: true }
+        ],
+        timestamp: new Date()
+      }]
+    }
+  },
+
   error(message) {
     return {
       embeds: [{
@@ -190,6 +209,8 @@ const formatter = {
           { name: '🔹 /cancel', value: 'Batalkan sesi rekber (sebelum pembeli join)' },
           { name: '🔹 /kirim <ekspedisi> <nomor_resi>', value: 'Tandai barang sudah dikirim' },
           { name: '🔹 /terima', value: 'Konfirmasi barang diterima' },
+          { name: '🔹 /komplain [alasan]', value: 'Ajukan komplain & bekukan transaksi' },
+          { name: '🔹 /withdraw <nominal> <metode> <rekening> <nama>', value: 'Tarik saldo ke rekening/e-wallet' },
           { name: '🔹 /statustransaksi', value: 'Cek status transaksi' }
         ],
         timestamp: new Date()

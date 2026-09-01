@@ -145,16 +145,19 @@ STATS_UPDATE_INTERVAL_MINUTES=5
 - **Opsi Alasan Komplain**: Memungkinkan pembeli atau penjual menyertakan alasan/deskripsi komplain.
 - **Formating UI**: Embed Discord & pesan Telegram berwarnakan merah warning dengan instruksi tindak lanjut Admin.
 
+### ✅ SELESAI — Sesi 5 (Sistem Penarikan Dana Seller / /withdraw)
+- **Model & Migrasi**: Model Sequelize `Withdrawal` (`db/models/withdrawal.js`) dan tabel `Withdrawals`.
+- **Command `/withdraw`**: Memungkinkan Penjual mengajukan pencairan saldo `available_balance` ke berbagai bank / e-wallet (DANA, SeaBank, BCA, GoPay, OVO).
+- **Pengurangan Saldo Otomatis**: Memotong `available_balance` saat pengajuan dibuat untuk mencegah penarikan ganda (*double withdrawal prevention*).
+- **Batas Minimal**: Ditentukan via `MIN_WITHDRAW_AMOUNT` di `.env` (default: Rp 10.000).
+
 ---
 
 ## 9. BACKLOG — Belum Dikerjakan
 
-### 🔴 Prioritas Tinggi
-1. **Sistem Penarikan Dana (`/withdraw`)** — Seller mencairkan `available_balance` ke rekening (via API pencairan Tripay atau manual approval admin).
-
 ### 🟡 Prioritas Menengah
-3. **Notifikasi Cross-Platform** — Kirim DM otomatis ke seller saat pembayaran sukses (Discord DM atau Telegram message).
-4. **Integrasi Tripay Produksi** — Isi `TRIPAY_API_KEY`, `TRIPAY_PRIVATE_KEY`, `TRIPAY_MERCHANT_CODE` di `.env` dan set `MOCK_PAYMENT=false`.
+1. **Notifikasi Cross-Platform** — Kirim DM otomatis ke seller saat pembayaran sukses (Discord DM atau Telegram message).
+2. **Integrasi Tripay Produksi** — Isi `TRIPAY_API_KEY`, `TRIPAY_PRIVATE_KEY`, `TRIPAY_MERCHANT_CODE` di `.env` dan set `MOCK_PAYMENT=false`.
 
 ### 🟢 Nice to Have
 5. **Admin Panel Channel** — Channel khusus admin untuk melihat transaksi `FROZEN`/`DISPUTED` dan mengambil tindakan via tombol.

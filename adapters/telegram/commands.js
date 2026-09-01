@@ -1,4 +1,5 @@
 const EscrowService = require('../../services/escrow')
+const WithdrawalService = require('../../services/withdrawal')
 const fmt = require('./formatter')
 
 async function registerCommands(bot) {
@@ -128,6 +129,32 @@ async function registerCommands(bot) {
 
   bot.command('komplain', handleKomplain)
   bot.command('dispute', handleKomplain)
+
+  // /withdraw <nominal> <metode> <rekening> <nama>
+  bot.command('withdraw', async (ctx) => {
+    const args = ctx.message.text.split(' ').slice(1)
+    if (args.length < 4) {
+      return ctx.reply(fmt.error('Format: /withdraw <nominal> <metode> <rekening> <nama_pemilik>\nContoh: /withdraw 100000 DANA 081234567890 Budi Santoso'))
+    }
+
+    const amount = parseFloat(args[0])
+    const bank_name = args[1]
+    const account_number = args[2]
+    const account_name = args.slice(3).join(' ')
+    const user = ctx.from
+
+    const result = await WithdrawalService.requestWithdrawal({
+      user_platform_id: String(user.id),
+      platform: 'TELEGRAM',
+      amount,
+      bank_name,
+      account_number,
+      account_name
+    })
+
+    if (!result.success) return ctx.reply(fmt.error(result.message))
+    await ctx.reply(fmt.withdrawRequested(result.withdrawal, result.newBalance), { parse_mode: 'Markdown' })
+  })
 }
 
 module.exports = registerCommands
