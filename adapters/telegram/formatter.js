@@ -78,7 +78,19 @@ const fmt = {
       `🔢 *Nomor Resi:* \`${trx.resi_number}\`\n\n` +
       `Sudah menerima barang?\n` +
       `Ketik /konfirmasi untuk menyelesaikan transaksi.\n` +
-      `Ketik /dispute jika ada masalah dengan barang.`
+      `Ketik /komplain jika ada masalah dengan barang.`
+    )
+  },
+
+  dispute(trx, reason) {
+    return (
+      `⚠️ *Komplain Diajukan — Transaksi Di-Freeze!*\n\n` +
+      `📋 *ID:* \`${trx.id}\`\n` +
+      `📦 *Barang:* ${trx.description}\n` +
+      `💰 *Nominal:* Rp ${Number(trx.amount).toLocaleString('id-ID')}\n` +
+      `📝 *Alasan:* ${reason || '_Tidak ada deskripsi_'}\n\n` +
+      `🛑 Transaksi ini telah dibekukan (*FROZEN*). Timer otomatis dihentikan dan dana ditahan.\n` +
+      `Silakan hubungi Admin untuk penanganan kasus ini.`
     )
   },
 
@@ -98,8 +110,10 @@ const fmt = {
       WAITING_PAYMENT: '💳 Menunggu pembayaran',
       PAID: '✅ Pembayaran diterima',
       DELIVERED: '📦 Barang dikirim',
+      COMPLETED_HOLDING: '🕒 Dalam Penahanan (Emergency Hold)',
       COMPLETED: '🎉 Selesai',
       DISPUTED: '⚠️ Dispute',
+      FROZEN: '🧊 Dibekukan (FROZEN)',
       CANCELLED: '❌ Dibatalkan'
     }
     return (

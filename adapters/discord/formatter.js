@@ -128,21 +128,25 @@ const formatter = {
           { name: '🚚 Ekspedisi', value: trx.resi_expedition, inline: true },
           { name: '🔢 Nomor Resi', value: `\`${trx.resi_number}\`` },
           { name: '✅ Konfirmasi', value: 'Ketik `/konfirmasi` jika barang sudah diterima.' },
-          { name: '⚠️ Dispute', value: 'Ketik `/dispute` jika ada masalah.' }
+          { name: '⚠️ Komplain', value: 'Ketik `/komplain` jika ada masalah.' }
         ],
         timestamp: new Date()
       }]
     }
   },
 
-  dispute(trx) {
+  dispute(trx, reason) {
     return {
       embeds: [{
-        title: '⚠️ Dispute Transaksi',
-        color: 0xe17055,
+        title: '⚠️ Komplain Diajukan — Transaksi Di-Freeze!',
+        color: 0xd63031,
+        description: 'Transaksi ini telah **dibekukan (FROZEN)**. Timer otomatis dihentikan dan pencairan dana ditahan sampai dikonfirmasi Admin.',
         fields: [
           { name: '📋 ID Transaksi', value: `\`${trx.id}\`` },
-          { name: '📨 Info', value: 'Hubungi admin dengan menyertakan ID transaksi di atas.' }
+          { name: '📦 Barang', value: trx.description, inline: true },
+          { name: '💰 Nominal', value: `Rp ${Number(trx.amount).toLocaleString('id-ID')}`, inline: true },
+          { name: '📝 Alasan Komplain', value: reason || '_Tidak ada deskripsi tambahan_' },
+          { name: '🛡️ Langkah Selanjutnya', value: 'Admin akan memeriksa transaksi ini. Silakan hubungi Admin server untuk verifikasi.' }
         ],
         timestamp: new Date()
       }]

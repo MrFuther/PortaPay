@@ -202,6 +202,45 @@ const EscrowService = {
     if (!trx) return null
     await trx.update({ status: 'PAID' })
     return trx
+  },
+
+  // Ajukan komplain / panic button (bekukan transaksi -> status FROZEN)
+  async triggerDispute({ user_platform_id, platform, reason }) {
+    const field = platform === 'TELEGRAM' ? 'telegram_id' : 'discord_id'
+    const user = await User.findOne({ where: { [field]: user_platform_id } })
+    if (!user) return { success: false, message: 'User tidak ditemukan.' }
+
+    const DISPUTE_ELIGIBLE_STATUSES = ['WAITING_BUYER', 'WAITING_PAYMENT', 'PAID', 'DELIVERED', 'COMPLETED_HOLDING']
+
+    const trx = await Transaction.findOne({
+      where: {
+        status: { [Op.in]: DISPUTE_ELIGIBLE_STATUSES },
+        [Op.or]: [
+          { seller_id: user.id },
+          { buyer_id: user.id }
+        ]
+      }
+    })
+
+    if (!trx) return { success: false, message: 'Kamu tidak punya transaksi aktif yang bisa dikomplain.' }
+
+    // Freeze transaction and cancel auto hold timer
+    await trx.update({
+      status: 'FROZEN',
+      hold_expired_at: null
+    })
+
+    const seller = await User.findByPk(trx.seller_id)
+    const buyer = trx.buyer_id ? await User.findByPk(trx.buyer_id) : null
+
+    return {
+      success: true,
+      transaction: trx,
+      seller,
+      buyer,
+      complainant: user,
+      reason: reason || 'Tidak ada alasan yang disertakan.'
+    }
   }
 }
 

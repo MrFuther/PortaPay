@@ -110,19 +110,24 @@ async function registerCommands(bot) {
     await ctx.reply(fmt.completed(result.transaction), { parse_mode: 'Markdown' })
   })
 
-  // /dispute
-  bot.command('dispute', async (ctx) => {
+  // /komplain (dan alias /dispute)
+  const handleKomplain = async (ctx) => {
     const user = ctx.from
-    const trx = await EscrowService.getActiveTransaction(String(user.id), 'TELEGRAM')
-    if (!trx) return ctx.reply(fmt.error('Kamu tidak punya transaksi aktif.'))
-    await ctx.reply(
-      `⚠️ *Dispute Transaksi*\n\n` +
-      `📋 *ID:* \`${trx.id}\`\n\n` +
-      `Silakan hubungi admin untuk menyelesaikan dispute ini.\n` +
-      `Sertakan ID transaksi di atas sebagai referensi.`,
-      { parse_mode: 'Markdown' }
-    )
-  })
+    const args = ctx.message.text.split(' ').slice(1)
+    const reason = args.length > 0 ? args.join(' ') : null
+
+    const result = await EscrowService.triggerDispute({
+      user_platform_id: String(user.id),
+      platform: 'TELEGRAM',
+      reason
+    })
+
+    if (!result.success) return ctx.reply(fmt.error(result.message))
+    await ctx.reply(fmt.dispute(result.transaction, result.reason), { parse_mode: 'Markdown' })
+  }
+
+  bot.command('komplain', handleKomplain)
+  bot.command('dispute', handleKomplain)
 }
 
 module.exports = registerCommands

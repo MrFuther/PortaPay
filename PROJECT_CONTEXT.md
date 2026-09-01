@@ -139,13 +139,18 @@ STATS_UPDATE_INTERVAL_MINUTES=5
 - **`services/stats.js`**: Service layer murni untuk query agregat DB (aktif, harian, bulanan, selesai hari ini).
 - **`db/guild-settings.js`**: JSON-based persistence untuk config per-guild Discord.
 
+### ✅ SELESAI — Sesi 4 (Sistem Komplain / Panic Button)
+- **`/komplain`** (dengan alias `/dispute`): Mengubah status transaksi aktif menjadi `FROZEN`.
+- **Penghentian Timer Otomatis**: Menghentikan timer hold 3 jam (`hold_expired_at = null`) agar pencairan tidak dapat berjalan otomatis saat dalam sengketa.
+- **Opsi Alasan Komplain**: Memungkinkan pembeli atau penjual menyertakan alasan/deskripsi komplain.
+- **Formating UI**: Embed Discord & pesan Telegram berwarnakan merah warning dengan instruksi tindak lanjut Admin.
+
 ---
 
 ## 9. BACKLOG — Belum Dikerjakan
 
 ### 🔴 Prioritas Tinggi
-1. **Panic Button / Dispute System (`/dispute`)** — Command sudah terdaftar di Discord tapi logic belum diimplementasi di `escrow.js`. Perlu: freeze transaksi → status `FROZEN` → hentikan timer → kirim notif ke admin channel.
-2. **Sistem Penarikan Dana (`/withdraw`)** — Seller mencairkan `available_balance` ke rekening (via API pencairan Tripay atau manual approval admin).
+1. **Sistem Penarikan Dana (`/withdraw`)** — Seller mencairkan `available_balance` ke rekening (via API pencairan Tripay atau manual approval admin).
 
 ### 🟡 Prioritas Menengah
 3. **Notifikasi Cross-Platform** — Kirim DM otomatis ke seller saat pembayaran sukses (Discord DM atau Telegram message).

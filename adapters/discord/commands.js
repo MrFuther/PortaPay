@@ -46,8 +46,9 @@ const commands = [
     .setDescription('Batalkan sesi rekber yang sedang menunggu pembeli'),
 
   new SlashCommandBuilder()
-    .setName('dispute')
-    .setDescription('Ajukan dispute jika ada masalah dengan barang'),
+    .setName('komplain')
+    .setDescription('Ajukan komplain & bekukan transaksi jika ada kendala')
+    .addStringOption(o => o.setName('alasan').setDescription('Alasan/detail komplain').setRequired(false)),
 
   new SlashCommandBuilder()
     .setName('setupbot')
@@ -198,10 +199,16 @@ async function handleInteraction(interaction) {
     return ephReply(fmt.cancelled(result.transaction))
   }
 
-  if (interaction.commandName === 'dispute') {
-    const trx = await EscrowService.getActiveTransaction(user.id, platform)
-    if (!trx) return ephReply(fmt.error('Kamu tidak punya transaksi aktif.'))
-    return ephReply(fmt.dispute(trx))
+  if (interaction.commandName === 'komplain' || interaction.commandName === 'dispute') {
+    const reason = interaction.options.getString('alasan')
+    const result = await EscrowService.triggerDispute({
+      user_platform_id: user.id,
+      platform,
+      reason
+    })
+
+    if (!result.success) return ephReply(fmt.error(result.message))
+    return ephReply(fmt.dispute(result.transaction, result.reason))
   }
 
   if (interaction.commandName === 'setupbot') {
