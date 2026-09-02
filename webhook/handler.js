@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const crypto = require('../services/payment/crypto')
 const EscrowService = require('../services/escrow')
+const NotificationService = require('../services/notification')
 require('dotenv').config()
 
 const TRIPAY_PRIVATE_KEY = process.env.TRIPAY_PRIVATE_KEY
@@ -27,7 +28,7 @@ router.post('/callback', express.json(), async (req, res) => {
       const transaction = await EscrowService.markAsPaid(merchant_ref)
       if (transaction) {
         console.log(`✅ Transaction ${merchant_ref} paid successfully!`)
-        // TODO: Optionally send a notification to the seller and buyer here.
+        await NotificationService.notifyPaid(transaction)
       }
     }
 
@@ -51,6 +52,7 @@ router.post('/n8n/callback', express.json(), async (req, res) => {
     const transaction = await EscrowService.markAsPaid(identifier)
     if (transaction) {
       console.log(`✅ [n8n Webhook] Transaction ${transaction.id} (Rp ${transaction.amount_with_code}) paid successfully!`)
+      await NotificationService.notifyPaid(transaction)
       return res.json({ success: true, transaction_id: transaction.id, status: transaction.status })
     } else {
       return res.status(404).json({ success: false, message: 'Transaksi tidak ditemukan atau status sudah berubah' })

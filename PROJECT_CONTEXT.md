@@ -145,19 +145,20 @@ STATS_UPDATE_INTERVAL_MINUTES=5
 - **Opsi Alasan Komplain**: Memungkinkan pembeli atau penjual menyertakan alasan/deskripsi komplain.
 - **Formating UI**: Embed Discord & pesan Telegram berwarnakan merah warning dengan instruksi tindak lanjut Admin.
 
-### ✅ SELESAI — Sesi 5 (Sistem Penarikan Dana Seller / /withdraw)
-- **Model & Migrasi**: Model Sequelize `Withdrawal` (`db/models/withdrawal.js`) dan tabel `Withdrawals`.
-- **Command `/withdraw`**: Memungkinkan Penjual mengajukan pencairan saldo `available_balance` ke berbagai bank / e-wallet (DANA, SeaBank, BCA, GoPay, OVO).
-- **Pengurangan Saldo Otomatis**: Memotong `available_balance` saat pengajuan dibuat untuk mencegah penarikan ganda (*double withdrawal prevention*).
-- **Batas Minimal**: Ditentukan via `MIN_WITHDRAW_AMOUNT` di `.env` (default: Rp 10.000).
+### ✅ SELESAI — Sesi 6 (Notifikasi Cross-Platform DM Otomatis)
+- **NotificationService (`services/notification.js`)**: Service terpusat pengiriman Direct Message (DM) ke Discord & Telegram.
+- **Event Triggers**:
+  - `notifyPaid()`: Mengirim DM ke Seller & Buyer ketika pembayaran n8n terkonfirmasi `PAID`.
+  - `notifyDelivered()`: Mengirim DM ke Buyer ketika Penjual menginput resi/ekspedisi (`/kirim`).
+  - `notifyCompleted()`: Mengirim DM ke Seller & Buyer ketika transaksi selesai/cair (`COMPLETED`).
+  - `notifyFrozen()`: Mengirim DM ke Seller & Buyer saat komplain diajukan (`/komplain`).
 
 ---
 
 ## 9. BACKLOG — Belum Dikerjakan
 
 ### 🟡 Prioritas Menengah
-1. **Notifikasi Cross-Platform** — Kirim DM otomatis ke seller saat pembayaran sukses (Discord DM atau Telegram message).
-2. **Integrasi Tripay Produksi** — Isi `TRIPAY_API_KEY`, `TRIPAY_PRIVATE_KEY`, `TRIPAY_MERCHANT_CODE` di `.env` dan set `MOCK_PAYMENT=false`.
+1. **Integrasi Tripay Produksi** — Isi `TRIPAY_API_KEY`, `TRIPAY_PRIVATE_KEY`, `TRIPAY_MERCHANT_CODE` di `.env` dan set `MOCK_PAYMENT=false`.
 
 ### 🟢 Nice to Have
 5. **Admin Panel Channel** — Channel khusus admin untuk melihat transaksi `FROZEN`/`DISPUTED` dan mengambil tindakan via tombol.

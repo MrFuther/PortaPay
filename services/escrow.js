@@ -119,6 +119,10 @@ const EscrowService = {
     if (!seller || trx.seller_id !== seller.id) return { success: false, message: 'Kamu bukan penjual di transaksi ini.' }
 
     await trx.update({ status: 'DELIVERED', resi_number, resi_expedition })
+
+    const NotificationService = require('./notification')
+    await NotificationService.notifyDelivered(trx)
+
     return { success: true, transaction: trx }
   },
 
@@ -232,6 +236,9 @@ const EscrowService = {
 
     const seller = await User.findByPk(trx.seller_id)
     const buyer = trx.buyer_id ? await User.findByPk(trx.buyer_id) : null
+
+    const NotificationService = require('./notification')
+    await NotificationService.notifyFrozen(trx, seller, buyer, user_platform_id, reason)
 
     return {
       success: true,

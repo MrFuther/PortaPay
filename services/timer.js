@@ -59,6 +59,9 @@ const TimerService = {
         })
       }
 
+      const NotificationService = require('./notification')
+      await NotificationService.notifyCompleted(trx, seller, buyer)
+
       console.log(`✅ Transaction ${trx.id} finalized successfully from HOLD.`)
     } catch (error) {
       console.error(`Failed to finalize transaction ${trx.id}:`, error)

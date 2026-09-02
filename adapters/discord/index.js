@@ -1,6 +1,7 @@
 const { Client, GatewayIntentBits, REST, Routes } = require('discord.js')
 const { commands, handleInteraction } = require('./commands')
 const DashboardService = require('./dashboard')
+const NotificationService = require('../../services/notification')
 require('dotenv').config()
 
 async function startDiscord() {
@@ -18,6 +19,7 @@ async function startDiscord() {
 
   client.once('clientReady', () => {
     console.log(`✅ Discord Bot berjalan sebagai ${client.user.tag}`)
+    NotificationService.setDiscordClient(client)
     // Start live stats dashboard — restore pinned message or post a new one
     DashboardService.start(client)
   })
