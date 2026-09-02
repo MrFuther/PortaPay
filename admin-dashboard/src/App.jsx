@@ -7,7 +7,7 @@ import Disputes from './pages/Disputes'
 import Withdrawals from './pages/Withdrawals'
 
 const API_BASE_URL = window.location.origin.includes('5173') 
-  ? 'http://localhost:3000' 
+  ? `http://${window.location.hostname}:3000` 
   : window.location.origin
 
 export default function App() {

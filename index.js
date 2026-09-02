@@ -47,9 +47,9 @@ async function start() {
     await sequelize.sync({ alter: true })
     console.log('✅ Database schema disinkronisasi')
 
-    // Start Express Webhook Server
-    app.listen(PORT, () => {
-      console.log(`✅ Webhook Server running on port ${PORT}`)
+    // Start Express Webhook & Admin Server
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`✅ Webhook & Admin Server running on port ${PORT} (LAN accessible)`)
     })
 
     // Start Timer Service
