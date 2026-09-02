@@ -1,0 +1,129 @@
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\input{glyphtounicode}
+
+% Font options
+\usepackage[sfdefault]{roboto}  % Sans-serif font
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Section formatting
+\titleformat{\section}{\Large\bfseries\scshape\raggedright}{}{0em}{}[\titlerule]
+
+% Ensure PDF is machine readable
+\pdfgentounicode=1
+
+% Custom commands
+\newcommand{\resumeItem}[1]{\item\small{#1}}
+\newcommand{\resumeSubheading}[4]{
+\vspace{-1pt}\item
+  \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+    \textbf{#1} & #2 \\
+    \textit{#3} & \textit{#4} \\
+  \end{tabular*}\vspace{-7pt}
+}
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\newcommand{\resumeSubHeadingList}{\begin{itemize}[leftmargin=0.15in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+
+\begin{document}
+
+\begin{center}
+  \textbf{\Huge Azra Pralingga} \\
+  \small 0851-0212-5127 $|$ \href{mailto:azraismyname@email.com}{azraismyname@email.com} $|$ 
+  \href{https://linkedin.com/in/azrapralingga}{linkedin.com/in/azrapralingga} $|$
+  \href{https://github.com/MrFuther}{github.com/MrFuther}
+\end{center}
+
+\section*{Summary}
+Computer Engineering graduate with strong ability in technical foundation of backend web development, robotics, and creative experience in graphic design. Proven track record in leading end-to-end software projects, such as architecting database-driven applications to digitize enterprise operations, alongside managing independent multimedia content creation. A highly adaptable problem-solver who thrives both in collaborative teams and independent roles. Managed to bring a blend of logical software engineering and creative thinking to impactful technical projects.
+
+\section{Experience}
+\resumeSubHeadingList
+  \resumeSubheading
+      {Full-Stack Developer Intern}{2025}
+      {PT Angkasa Pura Indonesia}{Jakarta}
+      \resumeSubHeadingList
+          \resumeItem{\textbullet\ Led the backend development of the AMAR web application using CodeIgniter 3 and PHP to digitize and automate preventive maintenance reporting for the IT Non-Public Service unit}
+          \resumeItem{\textbullet\ Architected a  MySQL database to handle multi-area data and engineered core system features, including automated PDF report generation and Budget Planning (RAB) modules}
+          \resumeItem{\textbullet\ Deployed the application to the company's local server and assisted the operational team with hands-on field maintenance and troubleshooting of airport network infrastructure}
+      \resumeSubHeadingListEnd
+  \resumeSubheading
+      {Graphic Designer}{2021}
+      {Magangjogja.com}{Yogyakarta}
+      \resumeSubHeadingList
+          \resumeItem{\textbullet\ Managed visual content creation and scheduling for 6 distinct Instagram accounts, ensuring consistent and timely publishing in strict adherence to established editorial timetables}
+          \resumeItem{\textbullet\ Collaborated seamlessly within a content team during the first 3 months, focusing on transforming provided copy and concepts into engaging, high-quality social media graphics}
+      \resumeSubHeadingListEnd
+\resumeSubHeadingListEnd
+
+\section{Education}
+\resumeSubHeadingList
+  \resumeSubheading
+      {Electronic Engineering Polytechnic Institute of Surabaya}{Surabaya, ID}
+      {S. Tr. T. in Computer Engineering}{Aug 2022 -- Jul 2026}
+\resumeSubHeadingListEnd
+
+\section{Skills}
+\resumeSubHeadingList
+  \resumeItem{\textbf{Programming Languages \& Frameworks}: JavaScript (ES6+), Node.js, Express.js, React, Python, C++, SQL, PHP, HTML, CSS}
+  \resumeItem{\textbf{Databases \& Tools}: PostgreSQL, MySQL, n8n Automation, Git, Docker, Discord.js, Telegraf, Arduino, ROS}
+  \resumeItem{\textbf{Softskills}: Fast Learner, Attention to Detail, Problem Solving, Teamwork \& Collaboration, Adaptability}
+\resumeSubHeadingListEnd
+
+\section{Projects}
+\resumeSubHeadingList
+    \resumeSubheading
+      {PortaPay -- Cross-Platform Rekber \& Escrow System}{2026} 
+      {Automated Escrow \& Web Admin Dashboard}{Node.js, Express, PostgreSQL, React, Discord.js, Telegraf, n8n}
+      \resumeSubHeadingList
+          \resumeItem{\textbullet\ Architected a multi-platform Escrow bot for Discord and Telegram, facilitating automated, secure peer-to-peer transaction holdings}
+          \resumeItem{\textbullet\ Integrated an automated payment verification engine using n8n email mutation webhooks (DANA \& SeaBank) paired with 3-digit unique transfer code collision handling}
+          \resumeItem{\textbullet\ Engineered a modern Web Admin Dashboard using React (Vite) and Express REST API to monitor real-time transaction volume, resolve sengketa/disputes, and manage seller withdrawals}
+          \resumeItem{\textbullet\ Developed automated cross-platform Direct Messaging (DM), panic-freeze protection mechanisms, and background timers for automated balance release}
+      \resumeSubHeadingListEnd
+  \resumeSubheading
+      {Advanced Driver Assistance System using Coupled Social Force Model}{2025-2026}
+      {Final Year Project}{C++, TensorFlow, OpenCV}
+      \resumeSubHeadingList
+          \resumeItem{\textbullet\ Designed and developed autonomous vehicle logic featuring Object Detection, Active Cruise Control, and Lane Keeping Assist}
+          \resumeItem{\textbullet\ Implemented a fuzzy logic approach within Robot Operating System (ROS) nodes using C++ to optimize the Social Force Model for navigation}
+          \resumeItem{\textbullet\ Integrated adaptive parameters to ensure the system responds dynamically to real-time environmental conditions using STM32, Jetson Nano, and OpenRB microcontrollers}
+      \resumeSubHeadingListEnd
+    \resumeSubheading
+      {Assets Maintenance And Report (AMAR)}{2025} 
+      {Preventive Maintenance Report Digitalization}{PHP, CSS, MySQL, Javascripts}
+      \resumeSubHeadingList
+          \resumeItem{\textbullet\ Engineered a comprehensive web application using PHP and CodeIgniter 3 to transition preventive maintenance reporting from manual spreadsheets to a fully digital platform}
+          \resumeItem{\textbullet\ Structured MySQL database to manage multi-area device tracking, personnel shifts, and a dynamic Budget Planning module}
+          \resumeItem{\textbullet\ Developed an automated PDF reporting feature that compiles maintenance checklists and photo documentation into official, ready-to-sign documents}
+      \resumeSubHeadingListEnd
+\resumeSubHeadingListEnd
+
+\end{document}
