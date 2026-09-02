@@ -31,4 +31,8 @@ function setGuildSettings(guildId, data) {
   saveSettings(settings)
 }
 
-module.exports = { getGuildSettings, setGuildSettings }
+function getAllGuildSettings() {
+  return loadSettings()
+}
+
+module.exports = { getGuildSettings, setGuildSettings, getAllGuildSettings }

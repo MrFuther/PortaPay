@@ -234,18 +234,24 @@ const DashboardService = {
   // di semua channel dashboard sebelum proses benar-benar berhenti.
   async setOffline(client) {
     const embed = buildOfflineEmbed()
+    const allSettings = GuildSettings.getAllGuildSettings()
     const jobs = []
 
-    for (const [guildId, stored] of dashboardMessages) {
-      const settings = GuildSettings.getGuildSettings(guildId)
-      if (!settings.operationalChannelId || !stored?.messageId) continue
+    for (const [guildId, settings] of Object.entries(allSettings)) {
+      const messageId = settings.dashboardMessageId || dashboardMessages.get(guildId)?.messageId
+      if (!settings.operationalChannelId || !messageId) continue
 
       jobs.push(
         (async () => {
           try {
             const channel = await client.channels.fetch(settings.operationalChannelId)
-            const msg = await channel.messages.fetch(stored.messageId)
-            await msg.edit({ embeds: [embed] })
+            if (channel) {
+              const msg = await channel.messages.fetch(messageId)
+              if (msg) {
+                await msg.edit({ embeds: [embed] })
+                console.log(`✅ [Dashboard] Guild ${guildId} di-set OFFLINE.`)
+              }
+            }
           } catch (err) {
             console.error(`❌ [Dashboard] Gagal set offline untuk guild ${guildId}:`, err.message)
           }

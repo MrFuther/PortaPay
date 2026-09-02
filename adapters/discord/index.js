@@ -31,18 +31,27 @@ async function startDiscord() {
   await client.login(process.env.DISCORD_TOKEN)
 
   // ── Graceful Shutdown ─────────────────────────────────────────────────────
-  // Tangkap sinyal terminal (Ctrl+C atau kill) dan update dashboard ke OFFLINE
-  // sebelum proses benar-benar berhenti, agar channel tidak menampilkan status
-  // "ONLINE" yang salah saat bot sudah mati.
+  // Tangkap sinyal terminal (Ctrl+C, SIGTERM, atau nodemon SIGUSR2) dan update
+  // dashboard ke OFFLINE sebelum proses benar-benar berhenti.
+  let isShuttingDown = false
+
   async function shutdown(signal) {
-    console.log(`\n⚠️  Sinyal ${signal} diterima. Memperbarui dashboard ke OFFLINE...`)
-    await DashboardService.setOffline(client)
-    console.log('✅ Dashboard diperbarui. Bot offline. Sampai jumpa!')
-    process.exit(0)
+    if (isShuttingDown) return
+    isShuttingDown = true
+    console.log(`\n⚠️  Sinyal ${signal} diterima. Memperbarui Live Dashboard ke OFFLINE...`)
+    try {
+      await DashboardService.setOffline(client)
+      console.log('✅ Live Dashboard diperbarui: Bot OFFLINE. Sampai jumpa!')
+    } catch (err) {
+      console.error('❌ Gagal memperbarui dashboard ke OFFLINE:', err.message)
+    } finally {
+      process.exit(0)
+    }
   }
 
-  process.on('SIGINT',  () => shutdown('SIGINT'))   // Ctrl+C di terminal
-  process.on('SIGTERM', () => shutdown('SIGTERM'))  // kill / PM2 stop
+  process.once('SIGINT',  () => shutdown('SIGINT'))   // Ctrl+C di terminal
+  process.once('SIGTERM', () => shutdown('SIGTERM'))  // kill / PM2 stop
+  process.once('SIGUSR2', () => shutdown('SIGUSR2'))  // nodemon restart
 }
 
 module.exports = startDiscord
