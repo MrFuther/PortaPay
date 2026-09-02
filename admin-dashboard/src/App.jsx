@@ -24,6 +24,7 @@ export default function App() {
   const [withdrawals, setWithdrawals] = useState([])
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [notification, setNotification] = useState(null)
 
   const showNotification = (message, type = 'success') => {
@@ -156,6 +157,8 @@ export default function App() {
         onLogout={handleLogout}
         pendingWithdrawsCount={stats.pendingWithdrawals}
         frozenCount={stats.frozenDisputes}
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
       />
 
       <main className="main-content">
@@ -163,6 +166,7 @@ export default function App() {
           title={tabTitles[activeTab]}
           onRefresh={fetchAllData}
           isRefreshing={isRefreshing}
+          setMobileMenuOpen={setMobileMenuOpen}
         />
 
         {notification && (

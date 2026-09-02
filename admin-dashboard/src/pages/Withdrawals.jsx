@@ -24,15 +24,15 @@ export default function Withdrawals({ withdrawals, onActionWithdrawal, isProcess
 
   return (
     <div>
-      <div className="glass-panel" style={{ padding: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+      <div className="glass-panel" style={{ padding: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
           <div>
-            <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#fff' }}>💸 Daftar Pengajuan Penarikan Dana (Withdrawals)</h3>
+            <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#fff' }}>💸 Pengajuan Penarikan Dana</h3>
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-              Verifikasi transfer manual ke rekening penjual untuk pengajuan berstatus PENDING.
+              Verifikasi transfer manual ke rekening penjual untuk pengajuan PENDING.
             </p>
           </div>
-          <span className="badge badge-pending" style={{ fontSize: '14px', padding: '6px 14px' }}>
+          <span className="badge badge-pending" style={{ fontSize: '13px', padding: '6px 12px' }}>
             {withdrawals.filter(w => w.status === 'PENDING').length} Menunggu Proses
           </span>
         </div>
@@ -44,7 +44,7 @@ export default function Withdrawals({ withdrawals, onActionWithdrawal, isProcess
             <p style={{ fontSize: '13px' }}>Riwayat penarikan dana penjual akan muncul di sini.</p>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <div className="data-table-container">
             <table className="data-table">
               <thead>
                 <tr>

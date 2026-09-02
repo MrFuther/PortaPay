@@ -1,8 +1,6 @@
-import React, { useState } from 'react'
+import React from 'react'
 
 export default function Disputes({ disputes, onResolveDispute, isProcessing }) {
-  const [selectedDispute, setSelectedDispute] = useState(null)
-
   const handleAction = (disputeId, action) => {
     if (window.confirm(`Apakah Anda yakin ingin melakukan aksi ${action} pada transaksi ini?`)) {
       onResolveDispute(disputeId, action)
@@ -11,15 +9,15 @@ export default function Disputes({ disputes, onResolveDispute, isProcessing }) {
 
   return (
     <div>
-      <div className="glass-panel" style={{ padding: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+      <div className="glass-panel" style={{ padding: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
           <div>
-            <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#fff' }}>⚠️ Daftar Transaksi Dalam Komplain (FROZEN)</h3>
+            <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#fff' }}>⚠️ Transaksi Dalam Komplain</h3>
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-              Transaksi di bawah ini dibekukan oleh user. Pilih tindakan resolusi untuk mengakhiri sengketa.
+              Transaksi dibekukan. Pilih tindakan resolusi di bawah ini.
             </p>
           </div>
-          <span className="badge badge-frozen" style={{ fontSize: '14px', padding: '6px 14px' }}>
+          <span className="badge badge-frozen" style={{ fontSize: '13px', padding: '6px 12px' }}>
             {disputes.length} Komplain Aktif
           </span>
         </div>
@@ -31,7 +29,7 @@ export default function Disputes({ disputes, onResolveDispute, isProcessing }) {
             <p style={{ fontSize: '13px' }}>Semua transaksi rekber berjalan lancar tanpa pembekuan.</p>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <div className="data-table-container">
             <table className="data-table">
               <thead>
                 <tr>
