@@ -3,7 +3,7 @@ const sequelize = require('./db/index')
 require('./db/models/user')
 require('./db/models/transaction')
 const startTelegram = require('./adapters/telegram/index')
-const startDiscord = require('./adapters/discord/index')
+const { startDiscord, stopDiscord } = require('./adapters/discord/index')
 const express = require('express')
 const webhookHandler = require('./webhook/handler')
 const mockHandler = require('./webhook/mock')
@@ -37,6 +37,21 @@ app.use('/admin', express.static(path.join(__dirname, 'admin-dashboard/dist')))
 if (process.env.MOCK_PAYMENT === 'true') {
   app.use('/mock-pay', mockHandler)
 }
+
+// ── Graceful Shutdown ─────────────────────────────────────────────────────────
+let isShuttingDown = false
+async function gracefulShutdown(signal) {
+  if (isShuttingDown) return
+  isShuttingDown = true
+  console.log(`\n⚠️  Sinyal ${signal} diterima. Memperbarui Live Dashboard ke OFFLINE...`)
+  await stopDiscord(signal)
+  process.exit(0)
+}
+
+process.once('SIGINT', () => gracefulShutdown('SIGINT'))
+process.once('SIGBREAK', () => gracefulShutdown('SIGBREAK'))
+process.once('SIGTERM', () => gracefulShutdown('SIGTERM'))
+process.once('SIGUSR2', () => gracefulShutdown('SIGUSR2'))
 
 async function start() {
   try {

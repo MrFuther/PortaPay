@@ -1,0 +1,6 @@
+{
+  "watch": ["*"],
+  "ext": "js,mjs,cjs,json",
+  "ignore": ["node_modules", "admin-dashboard", "db/guild_settings.json"],
+  "signal": "SIGINT"
+}
