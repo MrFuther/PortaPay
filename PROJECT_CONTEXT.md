@@ -153,6 +153,11 @@ STATS_UPDATE_INTERVAL_MINUTES=5
   - `notifyCompleted()`: Mengirim DM ke Seller & Buyer ketika transaksi selesai/cair (`COMPLETED`).
   - `notifyFrozen()`: Mengirim DM ke Seller & Buyer saat komplain diajukan (`/komplain`).
 
+### ✅ SELESAI — Sesi 7 (Web Admin Panel Dashboard — React + Express API)
+- **Express Admin REST API (`routes/admin.js`)**: Endpoints autentikasi (`POST /login`), ringkasan statistik (`GET /stats`), resolusi komplain (`POST /disputes/:id/resolve`), dan verifikasi penarikan dana (`POST /withdrawals/:id/action`).
+- **React Frontend (`admin-dashboard/`)**: Dashboard SPA dibuat dengan Vite + React (Dark mode glassmorphism UI, tab Overview, Komplain FROZEN, & Withdrawals).
+- **Keamanan**: Dilindungi password admin (`ADMIN_PASSWORD=admin12345` di `.env`).
+
 ---
 
 ## 9. BACKLOG — Belum Dikerjakan
@@ -161,5 +166,4 @@ STATS_UPDATE_INTERVAL_MINUTES=5
 1. **Integrasi Tripay Produksi** — Isi `TRIPAY_API_KEY`, `TRIPAY_PRIVATE_KEY`, `TRIPAY_MERCHANT_CODE` di `.env` dan set `MOCK_PAYMENT=false`.
 
 ### 🟢 Nice to Have
-5. **Admin Panel Channel** — Channel khusus admin untuk melihat transaksi `FROZEN`/`DISPUTED` dan mengambil tindakan via tombol.
-6. **Pengujian End-to-End** — Simulasi full flow dari `/rekber` sampai `COMPLETED` dengan mock payment.
+2. **Pengujian End-to-End** — Simulasi full flow dari `/rekber` sampai `COMPLETED` dengan mock payment.

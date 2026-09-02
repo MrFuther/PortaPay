@@ -7,13 +7,31 @@ const startDiscord = require('./adapters/discord/index')
 const express = require('express')
 const webhookHandler = require('./webhook/handler')
 const mockHandler = require('./webhook/mock')
+const adminRoutes = require('./routes/admin')
 const TimerService = require('./services/timer')
+const path = require('path')
 
 const app = express()
 const PORT = process.env.PORT || 3000
 
+// Middleware JSON & CORS header untuk dashboard React
+app.use(express.json())
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  if (req.method === 'OPTIONS') return res.sendStatus(200)
+  next()
+})
+
+// Mount Admin REST API
+app.use('/api/admin', adminRoutes)
+
 // Mount Webhook
 app.use('/tripay', webhookHandler)
+
+// Serve Static Frontend Admin Panel (bila diproduksi / built)
+app.use('/admin', express.static(path.join(__dirname, 'admin-dashboard/dist')))
 
 // Mount Mock Payment Gateway
 if (process.env.MOCK_PAYMENT === 'true') {
