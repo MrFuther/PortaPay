@@ -7,7 +7,7 @@ async function main() {
 
   const client = new Client({ intents: [GatewayIntentBits.Guilds] })
 
-  client.once('ready', async () => {
+  client.once('clientReady', async () => {
     console.log(`✅ Terhubung sebagai ${client.user.tag}`)
     try {
       await DashboardService.setOffline(client)
