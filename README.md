@@ -1,4 +1,4 @@
-# 🛡️ PortaPay — Automated Escrow Bot
+# PortaPay — Automated Escrow Bot
 
 **PortaPay** is a cross-platform automated escrow (rekening bersama) bot for **Discord** and **Telegram**, designed to secure peer-to-peer digital and physical item transactions without requiring a human admin in the middle.
 
@@ -6,7 +6,7 @@
 
 ---
 
-## 📌 What Problem Does This Solve?
+## What Problem Does This Solve?
 
 In local online trading communities, payment fraud is rampant. Sellers send fake transfer screenshots, buyers ghost after receiving goods, and manual admins are slow and often biased. PortaPay eliminates these risks by:
 
