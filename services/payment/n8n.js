@@ -1,77 +1,21 @@
-const { Op } = require('sequelize')
 const Transaction = require('../../db/models/transaction')
-require('dotenv').config()
-
-const N8nPaymentService = {
-  /**
-   * Menghasilkan kode unik (100 - 999) yang belum dipakai oleh transaksi WAITING_PAYMENT lain
-   * dalam kurun waktu 2 jam terakhir untuk nominal total yang sama.
-   */
-  async generateUniqueCode(totalBaseAmount) {
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000)
-
-    try {
-      for (let i = 0; i < 50; i++) {
-        // Pick random number from 100 to 999
-        const candidateCode = Math.floor(Math.random() * 900) + 100
-        const candidateAmountWithCode = Number((totalBaseAmount + candidateCode).toFixed(2))
-
-        const existing = await Transaction.findOne({
-          where: {
-            status: 'WAITING_PAYMENT',
-            amount_with_code: candidateAmountWithCode,
-            createdAt: { [Op.gte]: twoHoursAgo }
-          }
-        })
-
-        if (!existing) {
-          return { uniqueCode: candidateCode, amountWithCode: candidateAmountWithCode }
-        }
-      }
-    } catch (error) {
-      // Fallback jika database tidak dapat dijangkau saat generator dipanggil
-      const fallbackCode = Math.floor(Math.random() * 900) + 100
-      return { uniqueCode: fallbackCode, amountWithCode: Number((totalBaseAmount + fallbackCode).toFixed(2)) }
+const { cents, decimal } = require('../money')
+const { randomInt } = require('crypto')
+module.exports = {
+  async generateUniqueCode(base, transaction) {
+    if (!transaction) throw new Error('Reservasi pembayaran harus dalam transaksi database.')
+    // Historical amounts remain reserved so late transfers cannot fund a new buyer.
+    const start = randomInt(900)
+    for (let i = 0; i < 900; i++) {
+      const uniqueCode = 100 + ((start + i) % 900)
+      const amountWithCode = decimal(cents(base) + uniqueCode * 100)
+      if (!await Transaction.findOne({ where: { amount_with_code: amountWithCode }, transaction })) return { uniqueCode, amountWithCode }
     }
-
-    // Fallback jika 100-999 sangat padat: ambil 1000 - 9999
-    const fallbackCode = Math.floor(Math.random() * 9000) + 1000
-    const fallbackAmountWithCode = Number((totalBaseAmount + fallbackCode).toFixed(2))
-    return { uniqueCode: fallbackCode, amountWithCode: fallbackAmountWithCode }
+    throw new Error('Nominal pembayaran sudah penuh. Hubungi admin untuk alternatif pembayaran.')
   },
-
-  /**
-   * Memproses pembuatan instruksi pembayaran n8n
-   */
-  async createTransaction(transaction, buyer) {
-    try {
-      const amount = Number(transaction.amount)
-      const fee = Number(transaction.fee)
-      const totalBaseAmount = transaction.fee_type === 'EXCLUDE' ? amount + fee : amount
-
-      const { uniqueCode, amountWithCode } = await this.generateUniqueCode(totalBaseAmount)
-
-      const accounts = {
-        dana: process.env.PAYMENT_DANA_NUMBER || '081234567890',
-        seabank: process.env.PAYMENT_SEABANK_NUMBER || '901234567890',
-        accountName: process.env.PAYMENT_ACCOUNT_NAME || 'PortaPay Escrow'
-      }
-
-      return {
-        success: true,
-        amount_with_code: amountWithCode,
-        unique_code: uniqueCode,
-        payment_ref: `N8N-${transaction.id.substring(0, 8)}`,
-        accounts
-      }
-    } catch (error) {
-      console.error('Error generating n8n payment instruction:', error)
-      return {
-        success: false,
-        message: 'Gagal membuat instruksi pembayaran n8n.'
-      }
-    }
+  async createTransaction(trx, buyer, transaction) {
+    const base = cents(trx.amount) + (trx.fee_type === 'EXCLUDE' ? cents(trx.fee) : 0)
+    const code = await this.generateUniqueCode(decimal(base), transaction)
+    return { success: true, amount_with_code: code.amountWithCode, unique_code: code.uniqueCode, payment_ref: `N8N-${trx.id}` }
   }
 }
-
-module.exports = N8nPaymentService

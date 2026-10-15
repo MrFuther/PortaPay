@@ -246,3 +246,16 @@ node scripts/set_offline.js
 ## 📄 License
 
 This project is for educational and portfolio purposes.
+
+
+## Security update ? 15 October 2026
+
+See [FIX_REPORT.md](FIX_REPORT.md) for applied fixes, validation, and historical-payment reconciliation. Both workflow JSON files now contain the secure callback flow; do not restore SQL balance updates from old exports.
+
+For a fresh database run npm run db:migrate before npm start. Existing databases created with the old sync-based startup require schema verification and migration baselining; the local database has already been upgraded. Startup no longer alters tables automatically.
+
+Configure a unique ADMIN_PASSWORD of at least 16 characters, N8N_WEBHOOK_SECRET of at least 32 characters, and PAYMENT_ALLOWED_ACCOUNTS. The n8n HTTP Header Auth credential must send x-webhook-secret with the matching secret. Keep MOCK_PAYMENT=false for real-bank testing. Secrets belong in .env and n8n credentials, never workflow JSON.
+
+Admin login uses an HttpOnly cookie with a one-hour session. The Vite development origin, if used, must match ADMIN_ORIGIN; the built dashboard is served at /admin/. Production requires HTTPS.
+
+Run npm test and npm run test:integration for regression checks. Integration tests use disposable PostgreSQL schemas and do not test against public tables. Windows PowerShell users can invoke npm.cmd if npm.ps1 is restricted.

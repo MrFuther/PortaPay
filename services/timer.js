@@ -1,72 +1,24 @@
 const { Op } = require('sequelize')
 const Transaction = require('../db/models/transaction')
-const User = require('../db/models/user')
-
-const TimerService = {
+const Finance = require('./finance')
+module.exports = {
   start() {
-    console.log('⏳ Timer Service started. Checking for completed holds every minute.')
-    // Run every minute (60000 ms)
-    setInterval(this.checkCompletedHolds.bind(this), 60000)
-    // Run once immediately on start
+    if (this.interval) return
+    this.interval = setInterval(() => this.checkCompletedHolds(), 60000)
     this.checkCompletedHolds()
   },
-
+  stop() { clearInterval(this.interval); this.interval = null },
   async checkCompletedHolds() {
     try {
-      const now = new Date()
-      const expiredTransactions = await Transaction.findAll({
-        where: {
-          status: 'COMPLETED_HOLDING',
-          hold_expired_at: {
-            [Op.lt]: now
-          }
-        }
-      })
-
-      for (const trx of expiredTransactions) {
-        await this.finalizeTransaction(trx)
-      }
-    } catch (error) {
-      console.error('Timer Service Error:', error)
-    }
+      const rows = await Transaction.findAll({ where: { status: 'COMPLETED_HOLDING', hold_expired_at: { [Op.lte]: new Date() } } })
+      for (const trx of rows) await this.finalizeTransaction(trx)
+    } catch (error) { console.error('Timer Service Error:', error.message) }
   },
-
   async finalizeTransaction(trx) {
     try {
-      // 1. Update status to COMPLETED
-      await trx.update({ status: 'COMPLETED' })
-
-      // 2. Add balance to seller
-      // Jika EXCLUDE: Cair ke seller: Full Harga Barang (amount).
-      // Jika INCLUDE: Cair ke seller: Harga Barang - Fee Platform (amount - fee).
-      const sellerAmount = trx.fee_type === 'EXCLUDE' 
-        ? Number(trx.amount) 
-        : Number(trx.amount) - Number(trx.fee)
-
-      const seller = await User.findByPk(trx.seller_id)
-      if (seller) {
-        await seller.update({
-          available_balance: Number(seller.available_balance) + sellerAmount,
-          total_deals: seller.total_deals + 1,
-          trust_score: seller.trust_score + 1 // Example trust score increment
-        })
-      }
-
-      const buyer = await User.findByPk(trx.buyer_id)
-      if (buyer) {
-        await buyer.update({
-          total_deals: buyer.total_deals + 1
-        })
-      }
-
-      const NotificationService = require('./notification')
-      await NotificationService.notifyCompleted(trx, seller, buyer)
-
-      console.log(`✅ Transaction ${trx.id} finalized successfully from HOLD.`)
-    } catch (error) {
-      console.error(`Failed to finalize transaction ${trx.id}:`, error)
-    }
+      const result = await Finance.settle(trx.id, 'RELEASE_SELLER', { timer: true })
+      if (result) await require('./notification').notifyCompleted(result.transaction, result.seller, result.buyer).catch(console.error)
+      return result
+    } catch (error) { console.error(`Settlement ${trx.id} ditahan:`, error.message); return null }
   }
 }
-
-module.exports = TimerService

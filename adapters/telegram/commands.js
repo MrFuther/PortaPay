@@ -16,7 +16,7 @@ async function registerCommands(bot) {
       return ctx.reply(fmt.error('Format: /rekber <nominal> <fee_type> <deskripsi>\nContoh: /rekber 150000 EXCLUDE Sepatu Nike'))
     }
 
-    const amount = parseFloat(args[0])
+    const amount = Number(args[0])
     if (isNaN(amount) || amount <= 0) {
       return ctx.reply(fmt.error('Nominal tidak valid.'))
     }
@@ -137,7 +137,7 @@ async function registerCommands(bot) {
       return ctx.reply(fmt.error('Format: /withdraw <nominal> <metode> <rekening> <nama_pemilik>\nContoh: /withdraw 100000 DANA 081234567890 Budi Santoso'))
     }
 
-    const amount = parseFloat(args[0])
+    const amount = Number(args[0])
     const bank_name = args[1]
     const account_number = args[2]
     const account_name = args.slice(3).join(' ')

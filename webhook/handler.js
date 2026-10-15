@@ -1,66 +1,37 @@
 const express = require('express')
+const { createHmac, timingSafeEqual } = require('crypto')
+const Escrow = require('../services/escrow')
 const router = express.Router()
-const crypto = require('../services/payment/crypto')
-const EscrowService = require('../services/escrow')
-const NotificationService = require('../services/notification')
-require('dotenv').config()
-
-const TRIPAY_PRIVATE_KEY = process.env.TRIPAY_PRIVATE_KEY
-
-router.post('/callback', express.json(), async (req, res) => {
+function same(a, b) {
+  return typeof a === 'string' && typeof b === 'string' && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual(Buffer.from(a), Buffer.from(b))
+}
+async function processPayment(data, res) {
   try {
-    const signature = req.headers['x-callback-signature']
-    if (!signature) {
-      return res.status(400).json({ success: false, message: 'No signature provided' })
-    }
-
-    const jsonBody = JSON.stringify(req.body)
-    const isValid = crypto.verifyCallbackSignature(jsonBody, signature, TRIPAY_PRIVATE_KEY)
-
-    if (!isValid) {
-      return res.status(403).json({ success: false, message: 'Invalid signature' })
-    }
-
-    const { reference, merchant_ref, status } = req.body
-
-    // Handle payment status
-    if (status === 'PAID') {
-      const transaction = await EscrowService.markAsPaid(merchant_ref)
-      if (transaction) {
-        console.log(`✅ Transaction ${merchant_ref} paid successfully!`)
-        await NotificationService.notifyPaid(transaction)
-      }
-    }
-
-    return res.json({ success: true })
+    const result = await Escrow.acceptPayment(data)
+    require('../services/payment-notifications').kick()
+    return res.json({ success: true, transaction_id: result.transaction.id, status: result.transaction.status, duplicate: result.duplicate })
   } catch (error) {
-    console.error('Webhook Error:', error)
-    return res.status(500).json({ success: false, message: 'Internal server error' })
+    console.error('Payment rejected:', error.message)
+    return res.status(422).json({ success: false, message: 'Pembayaran tidak cocok atau perlu rekonsiliasi.' })
   }
-})
-
-// Endpoint Callback dari n8n Workflow (Mutasi Email DANA / SeaBank)
+}
 router.post('/n8n/callback', express.json(), async (req, res) => {
-  try {
-    const { nominal_mutasi, transaction_id, payment_ref, status } = req.body
-
-    const identifier = transaction_id || payment_ref || nominal_mutasi
-    if (!identifier) {
-      return res.status(400).json({ success: false, message: 'Nominal mutasi / Transaction ID required' })
-    }
-
-    const transaction = await EscrowService.markAsPaid(identifier)
-    if (transaction) {
-      console.log(`✅ [n8n Webhook] Transaction ${transaction.id} (Rp ${transaction.amount_with_code}) paid successfully!`)
-      await NotificationService.notifyPaid(transaction)
-      return res.json({ success: true, transaction_id: transaction.id, status: transaction.status })
-    } else {
-      return res.status(404).json({ success: false, message: 'Transaksi tidak ditemukan atau status sudah berubah' })
-    }
-  } catch (error) {
-    console.error('n8n Webhook Error:', error)
-    return res.status(500).json({ success: false, message: 'Internal server error' })
-  }
+  const secret = process.env.N8N_WEBHOOK_SECRET
+  if (!secret || secret.length < 32 || /^(replace_with|your_)/i.test(secret)) return res.status(503).json({ success: false, message: 'Callback belum dikonfigurasi.' })
+  // A dedicated n8n Header Auth credential; HTTPS is required outside localhost.
+  if (!same(req.headers['x-webhook-secret'], secret)) return res.status(403).json({ success: false })
+  const { event_id, nominal_mutasi, occurred_at, transaction_id, payment_ref, status, direction, currency, account } = req.body || {}
+  const allowed = (process.env.PAYMENT_ALLOWED_ACCOUNTS || '').split(',').map(s => s.trim()).filter(Boolean)
+  if (status !== 'PAID' || direction !== 'CREDIT' || currency !== 'IDR' || !allowed.includes(account)) return res.status(400).json({ success: false, message: 'Status/arah/rekening mutasi tidak valid.' })
+  return processPayment({ provider: 'N8N', event_id, amount: nominal_mutasi, occurred_at, transaction_id, payment_ref }, res)
 })
-
+router.post('/callback', express.json(), async (req, res) => {
+  const key = process.env.TRIPAY_PRIVATE_KEY
+  if (!key || !req.rawBody) return res.status(503).json({ success: false })
+  const expected = createHmac('sha256', key).update(req.rawBody).digest('hex')
+  if (!same(req.headers['x-callback-signature'], expected)) return res.status(403).json({ success: false })
+  const { status, reference, merchant_ref, amount, paid_at } = req.body || {}
+  if (status !== 'PAID') return res.json({ success: true, ignored: true })
+  return processPayment({ provider: 'TRIPAY', event_id: reference, transaction_id: merchant_ref, amount, occurred_at: typeof paid_at === 'number' ? new Date(paid_at * 1000).toISOString() : paid_at }, res)
+})
 module.exports = router

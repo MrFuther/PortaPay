@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, PermissionFlagsBits } = require('discord.js')
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, PermissionFlagsBits, MessageFlags } = require('discord.js')
 const EscrowService = require('../../services/escrow')
 const WithdrawalService = require('../../services/withdrawal')
 const fmt = require('./formatter')
@@ -31,8 +31,8 @@ const commands = [
   new SlashCommandBuilder()
     .setName('kirim')
     .setDescription('Tandai barang sudah dikirim')
-    .addStringOption(o => o.setName('ekspedisi').setDescription('Nama ekspedisi (JNE, SICEPAT, dll)').setRequired(true))
-    .addStringOption(o => o.setName('resi').setDescription('Nomor resi pengiriman').setRequired(true)),
+    .addStringOption(o => o.setName('ekspedisi').setDescription('Nama ekspedisi (wajib untuk barang fisik)').setRequired(false))
+    .addStringOption(o => o.setName('resi').setDescription('Nomor resi (wajib untuk barang fisik)').setRequired(false)),
 
   new SlashCommandBuilder()
     .setName('terima')
@@ -66,6 +66,7 @@ const commands = [
 ]
 
 async function handleInteraction(interaction) {
+  if ((interaction.isButton() || interaction.isModalSubmit()) && interaction.customId.startsWith('escrow:')) return require('./transaction-actions').handle(interaction)
   // ─── Handle Button Interactions ───
   if (interaction.isButton()) {
     return handleButton(interaction)
@@ -77,7 +78,7 @@ async function handleInteraction(interaction) {
   const platform = 'DISCORD'
 
   // Helper: reply with ephemeral flag
-  const ephReply = (data) => interaction.reply({ ...data, ephemeral: true })
+  const ephReply = (data) => interaction.reply({ ...data, flags: MessageFlags.Ephemeral })
 
   // ── Channel Guard ─────────────────────────────────────────────────────────
   // Bot hanya merespons perintah di channel operasional yang sudah diatur admin.
@@ -169,11 +170,12 @@ async function handleInteraction(interaction) {
   if (interaction.commandName === 'statustransaksi') {
     const trx = await EscrowService.getActiveTransaction(user.id, platform)
     if (!trx) return ephReply(fmt.error('Kamu tidak punya transaksi aktif.'))
-    return ephReply(fmt.status(trx))
+    const participant = await require('../../db/models/user').findOne({ where: { discord_id: user.id } })
+    return ephReply(require('../../services/transaction-panels').build(trx, trx.seller_id === participant.id ? 'seller' : 'buyer'))
   }
 
   if (interaction.commandName === 'kirim') {
-    const resi_expedition = interaction.options.getString('ekspedisi').toUpperCase()
+    const resi_expedition = interaction.options.getString('ekspedisi')?.toUpperCase()
     const resi_number = interaction.options.getString('resi')
 
     const result = await EscrowService.markAsDelivered({
@@ -190,7 +192,7 @@ async function handleInteraction(interaction) {
   if (interaction.commandName === 'terima') {
     const result = await EscrowService.getResiInfo(user.id, platform)
     if (!result.success) return ephReply(fmt.error(result.message))
-    return ephReply(fmt.resiInfo(result.transaction))
+    return ephReply(require('../../services/transaction-panels').build(result.transaction, 'buyer'))
   }
 
   if (interaction.commandName === 'konfirmasi') {
@@ -248,7 +250,7 @@ async function handleInteraction(interaction) {
     const channelName = interaction.channel?.name || channelId
 
     // Defer agar ada waktu untuk setup dashboard (async DB + Discord API)
-    await interaction.deferReply({ ephemeral: true })
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 
     await DashboardService.setupForGuild(interaction.client, interaction.guildId, channelId)
 
@@ -276,8 +278,8 @@ async function handleButton(interaction) {
   const userId = interaction.user.id
   const customId = interaction.customId
 
-  const ephUpdate = (data) => interaction.update({ ...data, ephemeral: true })
-  const ephReply = (data) => interaction.reply({ ...data, ephemeral: true })
+  const ephUpdate = (data) => interaction.update({ ...data, flags: MessageFlags.Ephemeral })
+  const ephReply = (data) => interaction.reply({ ...data, flags: MessageFlags.Ephemeral })
 
   // ── Step 1 result: Fee type selected ──
   if (customId === 'fee_exclude' || customId === 'fee_include') {

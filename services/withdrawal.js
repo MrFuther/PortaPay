@@ -1,5 +1,8 @@
 const User = require('../db/models/user')
 const Withdrawal = require('../db/models/withdrawal')
+const sequelize = require('../db')
+const { cents } = require('./money')
+const { changeBalance } = require('./finance')
 require('dotenv').config()
 
 const MIN_WITHDRAW_AMOUNT = parseFloat(process.env.MIN_WITHDRAW_AMOUNT || '10000')
@@ -10,8 +13,8 @@ const WithdrawalService = {
    */
   async requestWithdrawal({ user_platform_id, platform, amount, bank_name, account_number, account_name }) {
     try {
-      const numAmount = parseFloat(amount)
-      if (isNaN(numAmount) || numAmount <= 0) {
+      const numAmount = cents(amount, { positive: true }) / 100
+      if (!['DISCORD', 'TELEGRAM'].includes(platform) || ![bank_name, account_number, account_name].every(v => typeof v === 'string' && v.trim() && v.length <= 255)) {
         return { success: false, message: 'Nominal penarikan dana tidak valid.' }
       }
 
@@ -22,8 +25,9 @@ const WithdrawalService = {
         }
       }
 
+      return await sequelize.transaction(async transaction => {
       const field = platform === 'TELEGRAM' ? 'telegram_id' : 'discord_id'
-      const user = await User.findOne({ where: { [field]: user_platform_id } })
+      const user = await User.findOne({ where: { [field]: user_platform_id }, transaction, lock: transaction.LOCK.UPDATE })
       if (!user) {
         return { success: false, message: 'Akun user belum terdaftar.' }
       }
@@ -38,7 +42,6 @@ const WithdrawalService = {
 
       // Potong saldo user untuk mencegah penarikan ganda (double withdraw)
       const newBalance = availableBalance - numAmount
-      await user.update({ available_balance: newBalance })
 
       // Buat pengajuan penarikan dana
       const withdrawal = await Withdrawal.create({
@@ -49,7 +52,8 @@ const WithdrawalService = {
         account_name,
         status: 'PENDING',
         platform
-      })
+      }, { transaction })
+      await changeBalance(user, -cents(amount), `withdrawal:${withdrawal.id}`, transaction)
 
       return {
         success: true,
@@ -57,6 +61,7 @@ const WithdrawalService = {
         user,
         newBalance
       }
+      })
     } catch (error) {
       console.error('Error in requestWithdrawal:', error)
       return { success: false, message: 'Terjadi kesalahan sistem saat memproses penarikan dana.' }

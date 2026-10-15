@@ -1,101 +1,17 @@
 import React from 'react'
-
-export default function Dashboard({ stats }) {
-  const statCards = [
-    {
-      title: 'Total Volume Transaksi',
-      value: `Rp ${(stats.totalVolume || 0).toLocaleString('id-ID')}`,
-      icon: '💰',
-      color: '#6366f1',
-      bgGradient: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(99, 102, 241, 0.05))'
-    },
-    {
-      title: 'Transaksi Aktif',
-      value: stats.activeDeals || 0,
-      icon: '⏳',
-      color: '#06b6d4',
-      bgGradient: 'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(6, 182, 212, 0.05))'
-    },
-    {
-      title: 'Komplain / Frozen',
-      value: stats.frozenDisputes || 0,
-      icon: '⚠️',
-      color: '#ef4444',
-      bgGradient: 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.05))'
-    },
-    {
-      title: 'Withdrawals Pending',
-      value: stats.pendingWithdrawals || 0,
-      icon: '💸',
-      color: '#f59e0b',
-      bgGradient: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.05))'
-    }
-  ]
-
-  return (
-    <div>
-      {/* Stat Cards Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-        gap: '20px',
-        marginBottom: '32px'
-      }}>
-        {statCards.map((card, index) => (
-          <div
-            key={index}
-            className="glass-panel"
-            style={{
-              padding: '24px',
-              background: card.bgGradient,
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>{card.title}</span>
-              <div style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '12px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px'
-              }}>
-                {card.icon}
-              </div>
-            </div>
-            <div style={{ fontSize: '28px', fontWeight: '800', color: '#fff' }}>
-              {card.value}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* System Status Panel */}
-      <div className="glass-panel" style={{ padding: '28px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#fff', marginBottom: '16px' }}>
-          🛡️ Informasi Operasional Bot PortaPay
-        </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-          <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid var(--border-color)' }}>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Integration Mode</div>
-            <div style={{ fontSize: '16px', fontWeight: '700', color: '#10b981' }}>n8n Email Mutasi Payment (DANA/SeaBank)</div>
-          </div>
-
-          <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid var(--border-color)' }}>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Total Successful Deals</div>
-            <div style={{ fontSize: '16px', fontWeight: '700', color: '#6366f1' }}>{stats.totalCompletedDeals || 0} Transaksi Selesai</div>
-          </div>
-
-          <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid var(--border-color)' }}>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Status Engine</div>
-            <div style={{ fontSize: '16px', fontWeight: '700', color: '#06b6d4' }}>🟢 Active & Monitoring</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+import { ArrowUpRight, ArrowRight, ShieldCheck, Package, Monitor, Activity, CheckCircle2 as CircleCheck, Inbox } from 'lucide-react'
+import StatusBadge, { rupiah, dateLabel, statusLabels } from '../components/StatusBadge'
+export default function Dashboard({ stats, onNavigate }) {
+  const stages = [{ id: 'WAITING_PAYMENT', label: 'Menunggu pembayaran', color: '#b4a392' }, { id: 'PAID', label: 'Dana terverifikasi', color: '#be5c39' }, { id: 'DELIVERED', label: 'Sudah diserahkan', color: '#66867c' }, { id: 'COMPLETED_HOLDING', label: 'Dalam masa hold', color: '#c49c50' }, { id: 'COMPLETED', label: 'Transaksi selesai', color: '#344b42' }]
+  for (const entry of stats.pipeline || []) if (entry.count > 0 && !stages.some(stage => stage.id === entry.status)) stages.push({ id: entry.status, label: statusLabels[entry.status] || entry.status, color: '#b8b8aa' })
+  const total = (stats.pipeline || []).reduce((sum, s) => sum + s.count, 0)
+  const rows = stats.recentTransactions || []
+  const attention = Number(stats.frozenDisputes || 0) + Number(stats.pendingWithdrawals || 0)
+  return <div className="page-body">
+    <div className="page-intro"><div><div className="eyebrow">OPERASIONAL / RINGKASAN</div><h1>Ruang kendali rekber<span>.</span></h1><p>Seluruh kesepakatan, dana, dan tindak lanjut dalam satu pandangan.</p></div><span className="date-stamp">{new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' })}</span></div>
+    <section className="money-overview"><div className="funds-hero"><div className="hero-head"><span><ShieldCheck size={18} /> DANA DALAM PENGAMANAN</span><span className="hero-mini">ESCROW / IDR</span></div><div className="hero-amount">{rupiah(stats.escrowFunds)}</div><p>Dana terverifikasi yang belum selesai dicairkan atau dikembalikan.</p><div className="hero-bottom"><span className="hero-square"><ArrowUpRight size={21} /></span><span><strong>{stats.activeDeals || 0} transaksi aktif</strong><small>Termasuk pembayaran, penyerahan, dan masa hold</small></span><span className="hero-seal" aria-hidden="true"><ShieldCheck size={38} strokeWidth={1} /></span></div></div><div className="metric-stack"><article className="metric"><div><span className="metric-label">Volume transaksi selesai</span><ArrowUpRight size={18} /></div><strong>{rupiah(stats.totalVolume)}</strong><small>Akumulasi seluruh transaksi yang selesai</small></article><article className="metric"><div><span className="metric-label">Kesepakatan dituntaskan</span><CircleCheck size={18} /></div><strong>{stats.totalCompletedDeals || 0}<span className="metric-unit">transaksi</span></strong><small>Transaksi dengan status selesai</small></article></div></section>
+    <div className="overview-middle"><section className="surface pipeline"><div className="section-heading"><div><span className="eyebrow">ALUR TRANSAKSI</span><h2>Di setiap tahap.</h2></div><span className="quiet-count">{total} total</span></div><div className="pipeline-bar">{total ? stages.map(s => { const count = stats.pipeline?.find(p => p.status === s.id)?.count || 0; return count ? <span key={s.id} style={{ background: s.color, flex: count }} title={`${s.label}: ${count}`} /> : null }) : <span className="empty-bar" />}</div><div className="pipeline-list">{stages.map(s => <div key={s.id}><span><i style={{ background: s.color }} />{s.label}</span><strong>{stats.pipeline?.find(p => p.status === s.id)?.count || 0}</strong></div>)}</div></section><section className="surface attention"><div className="section-heading"><div><span className="eyebrow">TINDAK LANJUT</span><h2>{attention ? 'Perlu perhatian Anda.' : 'Semua tertangani.'}</h2></div><span className={`count-circle ${attention ? 'warm' : ''}`}>{attention}</span></div><button onClick={() => onNavigate('disputes')}><span className="action-icon rust"><Activity size={18} /></span><span><strong>Sengketa terbuka</strong><small>{stats.frozenDisputes ? 'Periksa bukti dan tentukan resolusi' : 'Tidak ada sengketa yang menunggu'}</small></span><b>{stats.frozenDisputes || 0}</b><ArrowRight size={17} /></button><button onClick={() => onNavigate('withdrawals')}><span className="action-icon olive"><ArrowUpRight size={19} /></span><span><strong>Penarikan menunggu</strong><small>{rupiah(stats.pendingWithdrawalAmount)} perlu diproses</small></span><b>{stats.pendingWithdrawals || 0}</b><ArrowRight size={17} /></button><p><ShieldCheck size={14} /> Periksa bukti dana sebelum mengambil keputusan.</p></section></div>
+    <section className="surface activity-section"><div className="section-heading"><div><span className="eyebrow">BUKU TRANSAKSI</span><h2>Pergerakan terbaru.</h2></div><span className="quiet-count">{rows.length} transaksi terakhir</span></div>{rows.length ? <div className="table-scroll"><table><thead><tr><th>Transaksi</th><th>Jenis / platform</th><th>Nominal barang</th><th>Status</th><th>Terakhir diperbarui</th></tr></thead><tbody>{rows.map(t => <tr key={t.id}><td><div className="transaction-cell"><span className="item-icon">{t.type === 'DIGITAL' ? <Monitor size={18} /> : <Package size={18} />}</span><span><strong>{t.description}</strong><small className="mono">{t.id.slice(0, 8).toUpperCase()}</small></span></div></td><td><span className="cell-main">{t.type === 'DIGITAL' ? 'Digital' : 'Fisik'}</span><small className="cell-sub">{t.platform}</small></td><td className="amount">{rupiah(t.amount)}</td><td><StatusBadge status={t.status} /></td><td className="cell-muted">{dateLabel(t.updatedAt)}</td></tr>)}</tbody></table></div> : <div className="empty-state"><Inbox size={32} strokeWidth={1.2} /><h3>Buku transaksi masih kosong.</h3><p>Transaksi dari bot akan tercatat di sini saat sesi pertama dibuat.</p></div>}</section>
+    <footer className="page-footer"><span>PORTAPAY OPERATIONS</span><span>Data operasional · diperbarui otomatis setiap 30 detik</span></footer>
+  </div>
 }

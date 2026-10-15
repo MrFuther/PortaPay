@@ -5,7 +5,10 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "set-offline": "node scripts/set_offline.js"
+    "set-offline": "node scripts/set_offline.js",
+    "test": "node --test tests/*.test.cjs",
+    "test:integration": "node tests/integration.cjs",
+    "db:migrate": "sequelize-cli db:migrate"
   },
   "keywords": [],
   "author": "",

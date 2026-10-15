@@ -9,15 +9,21 @@ const webhookHandler = require('./webhook/handler')
 const mockHandler = require('./webhook/mock')
 const adminRoutes = require('./routes/admin')
 const TimerService = require('./services/timer')
+const PaymentNotifications = require('./services/payment-notifications')
+const TransactionPanels = require('./services/transaction-panels')
 const path = require('path')
 
 const app = express()
 const PORT = process.env.PORT || 3000
 
 // Middleware JSON & CORS header untuk dashboard React
-app.use(express.json())
+app.use(express.json({ limit: '100kb', verify: (req, res, buffer) => { req.rawBody = Buffer.from(buffer) } }))
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*')
+  if (process.env.ADMIN_ORIGIN && req.headers.origin === process.env.ADMIN_ORIGIN) {
+    res.header('Access-Control-Allow-Origin', process.env.ADMIN_ORIGIN)
+    res.header('Access-Control-Allow-Credentials', 'true')
+    res.header('Vary', 'Origin')
+  }
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   if (req.method === 'OPTIONS') return res.sendStatus(200)
@@ -34,7 +40,7 @@ app.use('/tripay', webhookHandler)
 app.use('/admin', express.static(path.join(__dirname, 'admin-dashboard/dist')))
 
 // Mount Mock Payment Gateway
-if (process.env.MOCK_PAYMENT === 'true') {
+if (process.env.MOCK_PAYMENT === 'true' && process.env.NODE_ENV !== 'production') {
   app.use('/mock-pay', mockHandler)
 }
 
@@ -43,6 +49,8 @@ let isShuttingDown = false
 async function gracefulShutdown(signal) {
   if (isShuttingDown) return
   isShuttingDown = true
+  PaymentNotifications.stop()
+  TransactionPanels.stop()
   console.log(`\n⚠️  Sinyal ${signal} diterima. Memperbarui Live Dashboard ke OFFLINE...`)
   await stopDiscord(signal)
   process.exit(0)
@@ -58,9 +66,12 @@ async function start() {
     await sequelize.authenticate()
     console.log('✅ Database terhubung')
     
-    // Auto-sync for development to add missing columns safely
-    await sequelize.sync({ alter: true })
-    console.log('✅ Database schema disinkronisasi')
+    if (!require('./services/admin-auth').validConfig) throw new Error('ADMIN_PASSWORD wajib unik dan minimal 16 karakter.')
+    if (process.env.NODE_ENV === 'production' && process.env.MOCK_PAYMENT === 'true') throw new Error('MOCK_PAYMENT tidak boleh aktif di production.')
+    // Schema changes are applied explicitly through reviewed migrations.
+    await sequelize.getQueryInterface().describeTable('PaymentEvents')
+    await sequelize.getQueryInterface().describeTable('NotificationDeliveries')
+    await sequelize.getQueryInterface().describeTable('TransactionPanels')
 
     // Start Express Webhook & Admin Server
     app.listen(PORT, '0.0.0.0', () => {
@@ -69,11 +80,14 @@ async function start() {
 
     // Start Timer Service
     TimerService.start()
+    PaymentNotifications.start()
+    TransactionPanels.start()
 
     await startTelegram()
     await startDiscord()
   } catch (error) {
     console.error('❌ Error:', error)
+    process.exitCode = 1
   }
 }
 

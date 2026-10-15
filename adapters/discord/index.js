@@ -28,7 +28,14 @@ async function startDiscord() {
   })
 
   client.on('interactionCreate', (interaction) => {
-    handleInteraction(interaction, client)
+    Promise.resolve(handleInteraction(interaction, client)).catch(async error => {
+      console.error('Discord interaction failed:', error.name)
+      const payload = { content: error.name === 'Error' ? error.message : 'Aksi belum berhasil. Silakan coba lagi.' }
+      try {
+        if (interaction.deferred || interaction.replied) await interaction.editReply(payload)
+        else await interaction.reply({ ...payload, flags: 64 })
+      } catch (replyError) { console.error('Discord reply failed:', replyError.name) }
+    })
   })
 
   await client.login(process.env.DISCORD_TOKEN)

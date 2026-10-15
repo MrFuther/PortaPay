@@ -1,6 +1,6 @@
 {
-  "watch": ["*"],
-  "ext": "js,mjs,cjs,json",
-  "ignore": ["node_modules", "admin-dashboard", "db/guild_settings.json"],
+  "watch": ["index.js", "adapters", "services", "routes", "webhook", "db", ".env"],
+  "ext": "js,mjs,cjs,json,env",
+  "ignore": ["node_modules", "admin-dashboard", "db/guild_settings.json", "db/migrations"],
   "signal": "SIGINT"
 }

@@ -1,0 +1,10 @@
+const { test } = require('node:test')
+const assert = require('node:assert/strict')
+const { cents, decimal } = require('../services/money')
+test('money rejects unsafe input and retains cents', () => {
+  for (const value of [NaN, Infinity, '10000junk', '1e5', '1.001', '', null]) assert.throws(() => cents(value))
+  assert.throws(() => cents(-1, { positive: true }))
+  assert.throws(() => cents(0, { positive: true }))
+  assert.equal(cents('10342.00'), 1034200)
+  assert.equal(decimal(cents('0.10') + cents('0.20')), '0.30')
+})

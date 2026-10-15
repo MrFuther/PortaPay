@@ -4,3 +4,4 @@ db/guild_settings.json
 scratch/
 graphify-out/
 *.log
+admin-dashboard/dist/

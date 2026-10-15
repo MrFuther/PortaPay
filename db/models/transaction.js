@@ -70,6 +70,14 @@ const Transaction = sequelize.define('Transaction', {
     type: DataTypes.INTEGER,
     allowNull: true
   },
+  payment_issued_at: { type: DataTypes.DATE, allowNull: true },
+  payment_expires_at: { type: DataTypes.DATE, allowNull: true },
+  paid_at: { type: DataTypes.DATE, allowNull: true },
+  funded_amount: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
+  settled_at: { type: DataTypes.DATE, allowNull: true },
+  dispute_reason: { type: DataTypes.TEXT, allowNull: true },
+  delivery_note: { type: DataTypes.TEXT, allowNull: true },
+  disputed_from: { type: DataTypes.STRING, allowNull: true },
   resi_number: {
     type: DataTypes.STRING,
     allowNull: true
@@ -87,7 +95,8 @@ const Transaction = sequelize.define('Transaction', {
     allowNull: true
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  indexes: [{ name: 'transactions_waiting_amount_unique', unique: true, fields: ['amount_with_code'], where: { status: 'WAITING_PAYMENT' } }]
 })
 
 module.exports = Transaction

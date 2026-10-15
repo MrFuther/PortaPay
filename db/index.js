@@ -9,6 +9,7 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: 'postgres',
+    define: process.env.DB_SCHEMA ? { schema: process.env.DB_SCHEMA } : {},
     logging: false
   }
 )
