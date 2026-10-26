@@ -206,7 +206,7 @@ WAITING_BUYER → WAITING_PAYMENT → PAID → DELIVERED → COMPLETED_HOLDING �
 
 The web admin panel is accessible at:
 ```
-http://localhost:3000/admin
+https://portapay.vercel.app/
 ```
 Features:
 - **Overview**: Live transaction stats and daily/monthly volume
